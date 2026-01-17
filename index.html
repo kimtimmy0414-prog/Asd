@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>방문자 로거 (Discord Only)</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 60px 20px;
+      background: #f0f2f5;
+      color: #333;
+    }
+    h1 { color: #5865F2; }
+    #status {
+      margin-top: 30px;
+      padding: 15px;
+      border-radius: 8px;
+      background: #e3f2fd;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>어서오세요!</h1>
+  <p>페이지 로딩 중... 잠시만 기다려주세요.</p>
+
+  <div id="status">정보를 기록하고 있습니다...</div>
+
+  <script>
+    window.addEventListener('load', async () => {
+      const status = document.getElementById('status');
+
+      try {
+        // IP 가져오기
+        const ipRes = await fetch('https://api.ipify.org?format=json');
+        const { ip } = await ipRes.json();
+
+        const now = new Date().toISOString();
+        const ua = navigator.userAgent || 'unknown';
+        const lang = navigator.language || 'unknown';
+        const screen = `${window.screen.width} × ${window.screen.height}`;
+        const referrer = document.referrer || '직접 접속';
+
+        // Discord 웹훅 전송
+        const discordPayload = {
+          username: "Visitor Logger",
+          avatar_url: "https://i.imgur.com/4M34hi2.png", // 선택사항
+          embeds: [{
+            title: "새로운 방문자 감지!",
+            description: "누군가 사이트에 들어왔습니다",
+            color: 0x5865F2,
+            fields: [
+              { name: "IP 주소", value: `\`${ip}\``, inline: true },
+              { name: "접속 시간", value: now, inline: true },
+              { name: "브라우저/기기", value: ua.substring(0, 120) + (ua.length > 120 ? '...' : ''), inline: false },
+              { name: "언어", value: lang, inline: true },
+              { name: "화면 크기", value: screen, inline: true },
+              { name: "이전 페이지", value: referrer, inline: false }
+            ],
+            footer: { text: "Busan | " + window.location.host },
+            timestamp: now
+          }]
+        };
+
+        // ★ 여기에 당신의 Discord 웹훅 URL 넣으세요 ★
+        // (이전 거 노출됐으니 새로 만들어서 바꾸는 거 강추!)
+        const WEBHOOK_URL = "https://discord.com/api/webhooks/여기에_새_ID/여기에_새_TOKEN";
+
+        await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(discordPayload)
+        });
+
+        // 성공 메시지
+        status.innerHTML = "방문 기록 완료 ✓<br>Discord로 알림 전송됨!";
+        status.style.background = '#d4edda';
+        status.style.color = '#155724';
+
+      } catch (err) {
+        console.error('오류:', err);
+        status.innerHTML = "문제가 발생했습니다 ㅠㅠ<br>콘솔(F12) 확인해주세요";
+        status.style.background = '#f8d7da';
+        status.style.color = '#721c24';
+      }
+    });
+  </script>
+
+</body>
+</html>
